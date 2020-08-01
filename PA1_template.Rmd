@@ -1,0 +1,160 @@
+---
+title: "ReproducibleResearchProject"
+author: "Hnin Su PHYU"
+date: "7/31/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading and preprocessing data
+
+
+```{r activity}
+data <- read.csv('activity.csv', header = TRUE, na.strings = "NA", stringsAsFactors=FALSE)
+
+str(data)
+head(data)
+tail(data)
+```
+```{r activity}
+data$date <- as.Date(data$date, "%Y-%m-%d")
+str(data)
+head(data)
+```
+
+##What is mean total number of steps taken per day?
+
+1.Calculate the total number of steps taken per day
+
+```{r activity}
+totalSPD <- aggregate(steps~date, data=data, FUN=sum, na.rm=TRUE)
+str(totalSPD)
+head(totalSPD)
+```
+
+ 2.If you do not understand the difference between a histogram and a barplot, research the difference between     them. Make a histogram of the total number of steps taken each day
+ 
+ ```{ r }
+ 
+ hist(totalSPD$steps, breaks=20, col="grey",
+       main= "Total number of steps taken per day \n (missing data removed)",
+       xlab="Number of steps")
+
+```
+
+  3.Calculate and report the mean and median of the total number of steps taken per day
+ ```{r activity,echo=TRUE}
+   muTSPD <- mean(totalSPD$steps)
+  meTSPD <- median(totalSPD$steps)
+  print(muTSPD)
+  print(meTSPD)
+```
+
+##What is the average daily activity pattern?
+1.Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number   of steps taken, averaged across all days (y-axis)
+
+```{r activity}
+
+muSPI <- aggregate(steps~interval, data=data, FUN=mean, na.rm=TRUE)
+plot(muSPI, type="l",
+     main="Average number of steps per 5-minute interval",
+     xlab="5-minute intervals",
+     ylab="Average numberof steps")
+
+```
+
+2.Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of       steps?
+  ```{r activity}
+  numMaxStep <- muSPI[which(muSPI$steps==max(muSPI$steps)), ]$interval
+  numMaxStep
+  ```
+The 5-minute interval with maximum average number of steps is no. 835
+
+##Imputing missing values
+
+1.Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with   NAs)
+```{r activity}
+  numNA <- nrow(data[which(is.na(data$steps)),])
+  numNA
+```
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to     be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute     interval, etc
+```{r activity}
+dataNew<- transform(data,
+                   steps=ifelse(is.na(data$steps),
+                                muSPI[match(muSPI$interval, data$interval), ]$steps,
+                                data$steps))
+sum(is.na(dataNew))
+str(dataNew)
+head(dataNew)
+```
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+```{r}
+newTSPD <- aggregate(steps~date, data=dataNew, FUN=sum, na.rm=TRUE)
+muNTSPD <- mean(newTSPD$steps)
+meNTSPD <- median(newTSPD$steps)
+hist(newTSPD$steps, breaks=20, col="grey",
+     main="Total number of steps taken per day \n (missing data filled in)",
+     xlab="Number of steps")
+```
+Comparison of mean and median of total number of steps taken per day with missing data removed vs. filled in
+
+```{r activity}
+mumeComp <- data.frame("mean"=c(muTSPD, muNTSPD), "median"=c(meTSPD, meNTSPD))
+rownames(mumeComp) <- c("naRrmoved", "naFilled")
+mumeComp
+```
+Comparison of histogram of total number of steps taken each day with missing data removed vs. filled in
+```{r}
+par(mfrow=c(1, 2))
+hist(totalSPD$steps, breaks=20, col="grey",
+     main="Total number of steps taken per day \n (missing data removed)",
+     xlab="Number of steps")
+
+```
+```{r}
+hist(newTSPD$steps, breaks=20, col="grey",
+     main="Total number of steps taken per day \n (missing data filled in)",
+     xlab="Number of steps")
+```
+
+##Are there differences in activity patterns between weekdays and weekends?
+
+1.Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+
+```{r}
+dataNew$weekdays <- as.factor(ifelse(weekdays(dtNEW$date) %in% c("Saturday", "Sunday"),
+                                  "weekend", "weekday"))
+str(dataNew)
+head(dataNew)
+```
+```{r}
+head(dataNew)
+```
+
+2.Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
+
+```{r}
+weekSPI <- aggregate(steps ~ dataNew$weekdays + interval, dataNew, FUN=mean, na.rm=TRUE)
+   xyplot(steps ~ interval | weekdays, data=weekSPI, type="l", layout=c(1, 2),
+       xlab="Interval", ylab="Number of steps")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
